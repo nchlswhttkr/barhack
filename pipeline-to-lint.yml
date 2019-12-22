@@ -1,2 +1,2 @@
 steps:
-    - not-command: echo "Hello world!"
+    - command: echo "Hello world!"
