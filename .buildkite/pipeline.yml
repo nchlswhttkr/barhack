@@ -1,0 +1,4 @@
+steps:
+    - label: ":thinking_face:"
+      commands:
+        - buildkite-agent pipeline upload pipeline-to-lint.yml
