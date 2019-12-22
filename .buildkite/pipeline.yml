@@ -1,4 +1,8 @@
 steps:
     - label: ":thinking_face:"
+      agents:
+        - barhack: true
       commands:
+        - source /tmp/buildkite.token
+        - "curl -H \"Authorization: Bearer $BUILDKITE_TOKEN\" https://api.buildkite.com/v2/access-token"
         - buildkite-agent pipeline upload pipeline-to-lint.yml
