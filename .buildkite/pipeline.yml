@@ -6,3 +6,4 @@ steps:
         - source /tmp/buildkite.token
         - "curl -H \"Authorization: Bearer $$BUILDKITE_TOKEN\" https://api.buildkite.com/v2/access-token"
         - buildkite-agent pipeline upload pipeline-to-lint.yml
+        - "curl -H \"Authorization: Bearer $$BUILDKITE_TOKEN\" -X PUT \"https://api.buildkite.com/v2/organizations/$BUILDKITE_ORGANIZATION_SLUG/pipelines/$BUILDKITE_PIPELINE_SLUG/builds/$BUILDKITE_BUILD_NUMBER/cancel\""
