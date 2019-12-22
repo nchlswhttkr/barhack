@@ -15,3 +15,7 @@ Create a build and upload the given `pipeline.yml` file as a job. If it succeeds
 Negates the need to keep parity with Buildkite, their service handles validation.
 
 There might be some concerns with handling and presenting a response from their API, but I'm putting that aside for now because only I'll be seeing this.
+
+* [x] Can cancel a build if the pipeline upload command succeeds (`pipeline.yml` passed linting)
+* [x] Build fails if the `pipeline.yml` does not uploda (invalid file)
+* [] Can view the status of a pipeline file as it is checked
