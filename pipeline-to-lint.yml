@@ -1,2 +1,2 @@
 steps:
-    - bad-command: echo "Hello world!"
+    - command: echo "Hello world!"
