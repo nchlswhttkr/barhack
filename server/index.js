@@ -39,7 +39,7 @@ server.route({
         },
         body: JSON.stringify({
           commit: "HEAD",
-          branch: "master",
+          branch: "lint",
           env: {
             BARHACK_LINT_ID: id
           }

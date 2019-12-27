@@ -1,5 +1,35 @@
 # barhack
 
+Validate your Buildkite `pipeline.yml` files with a web service.
+
+Pipeline files are checked by attempting to upload them during a running job.
+
+## Usage
+
+```sh
+# Post the contents of your pipeline.yml file
+curl -H "Authorization: Basic <your-auth-details>" \
+    -H "Content-Type: text/plain" \
+    -X POST "https://barhack.nchlswhttkr.com/lint" \
+    -d '
+steps:
+    - command: echo "Hello world!"
+'
+# {"id": "<job-id>", "status_url": "https://barhack.nchlswhttkr.com/lint/<job-id>"}
+
+# Initially, the linting job will be pending
+curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint/<job-id>"
+# {"status": "PENDING"}
+
+# Later, it will be either passed or failed
+curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint/<job-id>"
+# {"status": "PASSED"}
+```
+
+---
+
+## DRAFTING NOTES
+
 Cobbling a little thing together during my Sunday bar shift.
 
 ## Linting a Buildkite `pipeline.yml` file
