@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@hapi/hapi": "^18.4.0",
+    "@microsoft/node-core-library": "^3.18.0",
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.0",
+    "uuid": "^3.3.3"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

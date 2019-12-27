@@ -1,0 +1,18 @@
+server {
+    listen 443 ssl;
+    server_name barhack.nchlswhttkr.com;
+
+    ssl_certificate /home/nchlswhttkr/nchlswhttkr.com.certificate;
+    ssl_certificate_key /home/nchlswhttkr/nchlswhttkr.com.key;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+    auth_basic "Barhack API";
+    auth_basic_user_file /home/barhack/.htpasswd;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://localhost:8080;
+    }
+}
