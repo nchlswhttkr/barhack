@@ -4,6 +4,6 @@ set -e
 
 if [ -n "$BARHACK_LINT_ID" ]; then
   if [[ `head -n 1 /home/barhack/files/$BARHACK_LINT_ID/status.txt` == 'PENDING' ]]; then
-    sed -i 's/PENDING/FAILED/' /home/barhack/files/$BARHACK_LINT_ID/status.txt
+    printf FAILED > /home/barhack/files/$BARHACK_LINT_ID/status.txt
   fi
 fi

@@ -16,7 +16,7 @@ set -e
 if [ -n "$BARHACK_LINT_ID" ]; then
     # Attempt to upload a pipeline file, invalid files will fail
     buildkite-agent pipeline upload /home/barhack/files/$BARHACK_LINT_ID/pipeline.yml
-    sed -i 's/PENDING/PASSED/' /home/barhack/files/$BARHACK_LINT_ID/status.txt
+    printf PASSED > /home/barhack/files/$BARHACK_LINT_ID/status.txt
     curl \
         -H "Authorization: Bearer $BARHACK_BUILDKITE_TOKEN" \
         -X PUT "https://api.buildkite.com/v2/organizations/$BUILDKITE_ORGANIZATION_SLUG/pipelines/$BUILDKITE_PIPELINE_SLUG/builds/$BUILDKITE_BUILD_NUMBER/cancel"
