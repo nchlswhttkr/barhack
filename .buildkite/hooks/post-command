@@ -2,6 +2,8 @@
 
 set -e
 
-if [[ `head -n 1 /home/barhack/builds/$BUILDKITE_BUILD_NUMBER.status` == 'PENDING' ]]; then
-    echo 'FAILED' > /home/barhack/builds/$BUILDKITE_BUILD_NUMBER.status
+if [ -n "$BARHACK_LINT_ID" ]; then
+  if [[ `head -n 1 /home/barhack/files/$BARHACK_LINT_ID/status.txt` == 'PENDING' ]]; then
+    echo 'FAILED' > /home/barhack/files/$BARHACK_LINT_ID/status.txt
+  fi
 fi

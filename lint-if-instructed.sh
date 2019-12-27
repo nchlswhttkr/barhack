@@ -5,25 +5,19 @@
 
 # Arguments are provided through environment variables, which should be
 # specified in the API call to trigger this job.
-#   $BARHACK_LINT               - 'true' if this job should try to lint
-#   $BARHACK_PIPELINE_FILE      - filepath of the pipeline to be linted
-#   $BARHACK_CREDENTIALS_FILE   - a script that loads credentials
+#   $BARHACK_LINT_ID - An ID that tells where to read/write files for this job
 
-# The $BUILDHACK_CREDENTIALS_FILE should set a $BARHACK_TOKEN that can be used
-# to make authenticated calls to the Buildkite API.
+# A $BARHACK_BUILDKITE_TOKEN should be set with an 'environment' hook before
+# this job runs, which should have the 'write_builds' scope.
+# https://buildkite.com/docs/pipelines/secrets#storing-secrets-in-environment-hooks
 
 set -e
 
-if [[ $BARHACK_LINT == 'true' ]]; then
-    source $BARHACK_CREDENTIALS_FILE
-    
-    # Temporary check to make sure the access token is valid
-    curl -H "Authorization: Bearer $BARHACK_TOKEN" https://api.buildkite.com/v2/access-token
-
+if [ -n "$BARHACK_LINT_ID" ]; then
     # Attempt to upload a pipeline file, invalid files will fail
-    buildkite-agent pipeline upload $BARHACK_PIPELINE_TO_LINT
-    echo "PASSED" > /home/barhack/builds/$BUILDKITE_BUILD_NUMBER.status
+    buildkite-agent pipeline upload /home/barhack/files/$BARHACK_LINT_ID/pipeline.yml
+    echo "PASSED" > /home/barhack/files/$BARHACK_LINT_ID/status.txt
     curl \
-        -H "Authorization: Bearer $BARHACK_TOKEN" \
+        -H "Authorization: Bearer $BARHACK_BUILDKITE_TOKEN" \
         -X PUT "https://api.buildkite.com/v2/organizations/$BUILDKITE_ORGANIZATION_SLUG/pipelines/$BUILDKITE_PIPELINE_SLUG/builds/$BUILDKITE_BUILD_NUMBER/cancel"
 fi

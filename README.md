@@ -20,10 +20,9 @@ Technically this is still running a build, but that isn't the concern of a user.
 
 There might be some concerns with handling and presenting a response from their API, but I'm putting that aside for now because only I'll be seeing this.
 
-* [x] Can cancel a build if the pipeline upload command succeeds (`pipeline.yml` passed linting)
-* [x] Build fails if the `pipeline.yml` does not uploda (invalid file)
-* [x] Can view the status of a pipeline file as it is checked via the web *
-  \* Passing files briefly show failed because the `post-command` hook runs on all jobs, even the first job to setup the pipeline for linting. Can be fixed by going from hooks to a single script that sets the appropriate status when running the linting.
-* [] Can upload/provide a `pipeline.yml` file, returning an ID that corresponds to a linting check. This is somewhat like an end user might expect.
+- [x] Can cancel a build if the pipeline upload command succeeds (`pipeline.yml` passed linting)
+- [x] Build fails if the `pipeline.yml` does not uploda (invalid file)
+- [x] Can view the status of a pipeline file as it is checked via the web \* \* Passing files briefly show failed because the `post-command` hook runs on all jobs, even the first job to setup the pipeline for linting. Can be fixed by going from hooks to a single script that sets the appropriate status when running the linting.
+- [ ] Can upload/provide a `pipeline.yml` file, returning an ID that corresponds to a linting check. This is somewhat like an end user might expect.
 
 You can check that status of build that linted a file at https://barhack.nchlswhttkr.com/builds/10.status, but for now this isn't too useful since only I can see which build number corresponds to which commit which corresponds to a given `pipeline-to-lint.yml`.
