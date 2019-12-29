@@ -2,8 +2,15 @@ const Hapi = require("@hapi/hapi");
 const { FileSystem } = require("@microsoft/node-core-library");
 const uuidv4 = require("uuid/v4");
 const fetch = require("node-fetch");
+const yaml = require("js-yaml");
+const Boom = require("@hapi/boom");
 
 require("dotenv").config();
+
+const Ajv = require("ajv");
+const ajv = new Ajv({ allErrors: true });
+ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-06.json"));
+const validate = ajv.compile(require("./pipeline-schema/schema.json"));
 
 const PORT = process.env.PORT;
 if (!PORT) {
@@ -17,9 +24,38 @@ const server = Hapi.server({
   host: "127.0.0.1"
 });
 
+/**
+ * Intended to be a "fast lint" option that satisfies Buildkite's JSON schema.
+ */
 server.route({
   method: "POST",
   path: "/lint",
+  handler: async (request, h) => {
+    let parsedYamlToJson;
+    try {
+      parsedYamlToJson = yaml.safeLoad(request.payload);
+    } catch (_) {
+      return Boom.badRequest("Could not parse YAML");
+    }
+    const valid = validate(parsedYamlToJson);
+
+    let response = { status: valid ? "PASSED" : "FAILED" };
+    if (!valid) {
+      response.errors = validate.errors;
+      response.pipeline = parsedYamlToJson;
+    }
+
+    return response;
+  }
+});
+
+/**
+ * Intended to be an extended check, that actually attempts to run the pipeline
+ * by uploading it within a build.
+ */
+server.route({
+  method: "POST",
+  path: "/lint-with-build",
   handler: async (request, h) => {
     // Save the given file, might conflict or not work concurrently but oh well
     const id = uuidv4();
@@ -50,7 +86,7 @@ server.route({
     return h
       .response({
         id,
-        status_url: `https://barhack.nchlswhttkr.com/lint/${id}`
+        status_url: `${process.env.BASE_URL}/lint-with-build/${id}`
       })
       .code(201);
   }
@@ -58,7 +94,7 @@ server.route({
 
 server.route({
   method: "GET",
-  path: "/lint/{id}",
+  path: "/lint-with-build/{id}",
   handler: async (request, h) => {
     const status = FileSystem.readFile(
       `${FILE_ROOT}/${request.params.id}/status.txt`

@@ -14,5 +14,11 @@ server {
     location / {
         include proxy_params;
         proxy_pass http://localhost:8080;
+
+        location = /lint {
+            auth_basic off;
+            include proxy_params;
+            proxy_pass http://localhost:8080;
+        }
     }
 }

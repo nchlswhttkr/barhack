@@ -2,27 +2,43 @@
 
 Validate your Buildkite `pipeline.yml` files with a web service.
 
-Pipeline files are checked by attempting to upload them during a running job.
+Pipeline files can either be checked by schema validation, or by attempting to upload them during a running build.
 
 ## Usage
+
+You can send your pipeline file to be validated against Buildkite's [JSON schema](https://github.com/buildkite/pipeline-schema).
+
+> :exclamation: Be careful not to use tab characters using a request editor like Postman.
+
+```sh
+curl -H "Content-Type: text/plain" -X POST "https://barhack.nchlswhttkr.com/lint" \
+    -d '
+steps:
+  - commands: echo "Hello World"
+  - command: echo "https://youtu.be/O_d-Nc_roLY"
+'
+# {"status": "PASSED"}
+```
+
+A more confident way to check is to have an agent attempt to upload the pipeline file while running a build. Authentication is required at the moment.
 
 ```sh
 # Post the contents of your pipeline.yml file
 curl -H "Authorization: Basic <your-auth-details>" \
     -H "Content-Type: text/plain" \
-    -X POST "https://barhack.nchlswhttkr.com/lint" \
+    -X POST "https://barhack.nchlswhttkr.com/lint-with-build" \
     -d '
 steps:
     - command: echo "Hello world!"
 '
-# {"id": "<job-id>", "status_url": "https://barhack.nchlswhttkr.com/lint/<job-id>"}
+# {"id": "<job-id>", "status_url": "https://barhack.nchlswhttkr.com/lint-with-build/<job-id>"}
 
 # Initially, the linting job will be pending
-curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint/<job-id>"
+curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint-with-build/<job-id>"
 # {"status": "PENDING"}
 
 # Later, it will be either passed or failed
-curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint/<job-id>"
+curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.com/lint-with-build/<job-id>"
 # {"status": "PASSED"}
 ```
 

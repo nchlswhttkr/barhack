@@ -8,5 +8,6 @@ Group=www-data
 Environment="PORT=8080"
 WorkingDirectory=/home/barhack
 ExecStart=/usr/local/bin/node server/index.js
+
 [Install]
 WantedBy=multi-user.target

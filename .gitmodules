@@ -1,0 +1,3 @@
+[submodule "server/pipeline-schema"]
+	path = server/pipeline-schema
+	url = https://github.com/buildkite/pipeline-schema
