@@ -8,7 +8,7 @@ Pipeline files can either be checked by schema validation, or by attempting to u
 
 You can send your pipeline file to be validated against Buildkite's [JSON schema](https://github.com/buildkite/pipeline-schema).
 
-> :exclamation: Be careful not to use tab characters using a request editor like Postman.
+> :exclamation: Be careful not to use tab characters if you're using a request editor like Postman.
 
 ```sh
 curl -H "Content-Type: text/plain" -X POST "https://barhack.nchlswhttkr.com/lint" \
