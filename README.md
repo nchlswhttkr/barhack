@@ -42,6 +42,46 @@ curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.
 # {"status": "PASSED"}
 ```
 
+## Setup
+
+The hapi server requires some configuration to be set by an `.env` file.
+
+```
+BARHACK_BUILDKITE_TOKEN=abc123 # Your Buildkite API token
+BARHACK_ORG=nchlswhttkr
+BARHACK_PIPELINE=barhack
+BARHACK_FILE_ROOT=/home/barhack/files
+BASE_URL=https://barhack.nchlswhttkr.com
+```
+
+### Extension: Validate using a live build
+
+> :exclamation: You only need to do the below steps if you want to validate your files using a live build rather than just JSON validation.
+
+You need to make the Buildkite token available for the agent that will run your validation jobs using the [environment hook](https://buildkite.com/docs/pipelines/secrets#storing-secrets-in-environment-hooks).
+
+```sh
+#!/bin/bash
+
+# The `environment` hook will run before all other commands, and can be used
+# to set up secrets, data, etc. Anything exported in hooks will be available
+# to the build script.
+#
+# For example:
+#
+# export SECRET_VAR=token
+
+set -euo pipefail
+
+if [[ "$BUILDKITE_PIPELINE_SLUG" == "barhack" ]]; then
+  export BARHACK_BUILDKITE_TOKEN="abc123"
+fi
+```
+
+Make sure your agent is tagged appropriately so you can target it, and then supply the command step to validate files.
+
+![Configuration in Buildkite, the command is "lint-if-instructed.sh" and the agent targeting rule is "barhack=true"](https://nchlswhttkr.com/blog/validating-buildkite-pipelines/pipeline-steps.png)
+
 ---
 
 ## DRAFTING NOTES
