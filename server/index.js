@@ -5,7 +5,8 @@ const fetch = require("node-fetch");
 const yaml = require("js-yaml");
 const Boom = require("@hapi/boom");
 
-require("dotenv").config();
+require("dotenv").config(); // sets all the BARHACK_XXX variables, see README
+const FILE_ROOT = process.env.BARHACK_FILE_ROOT;
 
 const Ajv = require("ajv");
 const ajv = new Ajv({ allErrors: true });
@@ -17,8 +18,6 @@ if (!PORT) {
   throw new Error("PORT not defined");
 }
 
-const FILE_ROOT = "/home/barhack/files";
-
 const server = Hapi.server({
   port: PORT,
   host: "127.0.0.1"
@@ -26,6 +25,7 @@ const server = Hapi.server({
 
 /**
  * Intended to be a "fast lint" option that satisfies Buildkite's JSON schema.
+ * See https://github.com/buildkite/pipeline-schema
  */
 server.route({
   method: "POST",
