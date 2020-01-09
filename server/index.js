@@ -66,7 +66,7 @@ server.route({
     FileSystem.changePosixModeBits(`${FILE_ROOT}/${id}/status.txt`, "666");
 
     // Trigger a pipeline to lint it
-    await fetch(
+    const response = await fetch(
       `https://api.buildkite.com/v2/organizations/${process.env.BARHACK_ORG}/pipelines/${process.env.BARHACK_PIPELINE}/builds`,
       {
         method: "POST",
@@ -83,6 +83,11 @@ server.route({
       }
     );
 
+    if (!response.ok) {
+      FileSystem.deleteFile(`${FILE_ROOT}/${id}/status.txt`);
+      throw Boom.internal(`Received ${response.status} from Buildkite API`);
+    }
+
     return h
       .response({
         id,
@@ -96,6 +101,10 @@ server.route({
   method: "GET",
   path: "/lint-with-build/{id}",
   handler: async (request, h) => {
+    if (!FileSystem.exists(`${FILE_ROOT}/${request.params.id}/status.txt`)) {
+      throw Boom.notFound();
+    }
+
     const status = FileSystem.readFile(
       `${FILE_ROOT}/${request.params.id}/status.txt`
     );
