@@ -80,7 +80,7 @@ if (CAN_RUN_BUILDKITE_BUILDS) {
             branch: "refactor", // TODO change back to master
             env: {
               BARHACK_LINT_ID: id,
-              BARHACK_FILE_ROOT: id,
+              BARHACK_FILE_ROOT: FILE_ROOT,
             },
           }),
         }
