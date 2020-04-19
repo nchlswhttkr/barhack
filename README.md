@@ -8,10 +8,9 @@ Pipeline files can either be checked by schema validation, or by attempting to u
 
 You can send your pipeline file to be validated against Buildkite's [JSON schema](https://github.com/buildkite/pipeline-schema).
 
-> :exclamation: Be careful not to use tab characters if you're using a request editor like Postman.
-
 ```sh
-curl -H "Content-Type: text/plain" -X POST "https://barhack.nchlswhttkr.com/lint" \
+curl "https://barhack.nchlswhttkr.com/lint" \
+    -H "Content-Type: text/plain" \
     -d '
 steps:
   - commands: echo "Hello World"
@@ -20,13 +19,15 @@ steps:
 # {"status": "PASSED"}
 ```
 
-A more confident way to check is to have an agent attempt to upload the pipeline file while running a build. Authentication is required at the moment.
+Pipeline files can also be validated by uploading them during a running build. To see this in action, you can set up the server and Buildkite agent on your local machine.
+
+Here's how it looks using my server! Access is restricted to authenticated requests only.
 
 ```sh
 # Post the contents of your pipeline.yml file
-curl -H "Authorization: Basic <your-auth-details>" \
+curl "https://barhack.nchlswhttkr.com/lint-with-build" \
+    -H "Authorization: Basic <your-auth-details>" \
     -H "Content-Type: text/plain" \
-    -X POST "https://barhack.nchlswhttkr.com/lint-with-build" \
     -d '
 steps:
     - command: echo "Hello world!"
@@ -44,21 +45,29 @@ curl -H "Authorization: Basic <your-auth-details>" "https://barhack.nchlswhttkr.
 
 ## Setup
 
-The hapi server requires some configuration to be set by an `.env` file.
+### Validating pipeline files against a schema
 
+By default, a local server will only offer schema validation.
+
+```sh
+cd server
+npm ci
+npm start
+
+curl "http://localhost:8080/lint" \
+    -H "Content-Type: text/plain" \
+    -d '
+steps:
+  - commands: echo "Hello World"
+  - command: echo "https://youtu.be/O_d-Nc_roLY"
+'
 ```
-BARHACK_BUILDKITE_TOKEN=abc123 # Your Buildkite API token
-BARHACK_ORG=nchlswhttkr
-BARHACK_PIPELINE=barhack
-BARHACK_FILE_ROOT=/home/barhack/files
-BASE_URL=https://barhack.nchlswhttkr.com
-```
 
-### Extension: Validate using a live build
+### Validating pipeline files with a running build
 
-> :exclamation: You only need to do the below steps if you want to validate your files using a live build rather than just JSON validation.
+If you would like to also validate files within a live build, you can should set up a Buildkite agent on your machine to run under your user. Make sure the agent is [tagged appropriately](https://buildkite.com/docs/agent/v3/cli-start#setting-tags) (`barhack=true`).
 
-You need to make the Buildkite token available for the agent that will run your validation jobs using the [environment hook](https://buildkite.com/docs/pipelines/secrets#storing-secrets-in-environment-hooks).
+Your local agent will also need an API token with permission to `write_builds`. You can provide it through the [environment hook](https://buildkite.com/docs/pipelines/secrets#storing-secrets-in-environment-hooks).
 
 ```sh
 #!/bin/bash
@@ -71,16 +80,43 @@ You need to make the Buildkite token available for the agent that will run your 
 #
 # export SECRET_VAR=token
 
-set -euo pipefail
+set -eu
 
 if [[ "$BUILDKITE_PIPELINE_SLUG" == "barhack" ]]; then
   export BARHACK_BUILDKITE_TOKEN="abc123"
 fi
 ```
 
-Make sure your agent is tagged appropriately so you can target it, and then supply the command step to validate files.
+From the Buildkite dashboard, create a new pipeline with one step. This step will run the `lint-if-instructed.sh` script to validate a pipeline file, and targets agents with the `barhack=true` tag.
 
 ![Configuration in Buildkite, the command is "lint-if-instructed.sh" and the agent targeting rule is "barhack=true"](https://nchlswhttkr.com/blog/validating-buildkite-pipelines/pipeline-steps.png)
+
+Finally, you can specify the necessary configuration for the server with a `server/.env` file.
+
+```
+BARHACK_BUILDKITE_TOKEN=abc123    # Your Buildkite API token
+BARHACK_ORG=nchlswhttkr           # Your organisation name in Buildkite
+BARHACK_PIPELINE=barhack          # The Buildkite pipeline to run linting jobs
+```
+
+Restart your server, and run a validation job.
+
+```sh
+curl "https://barhack.nchlswhttkr.com/lint-with-build" \
+    -H "Content-Type: text/plain" \
+    -d '
+steps:
+    - command: echo "Hello world!"
+'
+```
+
+### Hosting your validation server
+
+You can repeat this setup in your own servers. I opted to use a reverse proxy with Nginx (see [barhack.nchlswhttkr.com.nginx](./barhack.nchlswhttkr.com.nginx)), but you can choose your own approach.
+
+If your server is going to be web-facing, you can specify its URL using the `BASE_URL` environment variable.
+
+I recommend running your Buildkite agent and server as systemd unit under a single user, since both need shared access to local files. If you don't target your agent correctly, jobs might run on an agent that does not have access to pipeline file it's meant to validate.
 
 ---
 

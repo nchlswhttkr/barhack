@@ -8,17 +8,19 @@ server {
     ssl_prefer_server_ciphers on;
     ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
 
-    auth_basic "Barhack API";
-    auth_basic_user_file /home/barhack/.htpasswd;
-
     location / {
         include proxy_params;
         proxy_pass http://localhost:8080;
-
-        location = /lint {
-            auth_basic off;
-            include proxy_params;
-            proxy_pass http://localhost:8080;
+        
+        location /lint-with-build {
+            auth_basic "Barhack API";
+            auth_basic_user_file /home/barhack/.htpasswd;
         }
     }
+}
+
+server {
+    listen 80;
+    server_name barhack.nchlswhttkr.com;
+    return 301 https://barhack.nchlswhttkr.com$request_uri;
 }

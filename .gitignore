@@ -3,3 +3,4 @@ secrets/
 # server
 /server/.env
 /server/node_modules
+/server/files

@@ -3,12 +3,9 @@ Description=barhack daemon
 After=network.target
 
 [Service]
-User=barhack
-Group=www-data
-Environment="PORT=8080"
-WorkingDirectory=/home/barhack/server
-ExecStartPre=/usr/local/bin/npm ci
-ExecStart=/usr/local/bin/node index.js
+WorkingDirectory=/home/barhack
+ExecStartPre=/bin/bash pre-start.sh
+ExecStart=/usr/local/bin/node server/index.js
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

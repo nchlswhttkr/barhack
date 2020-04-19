@@ -5,23 +5,20 @@ const fetch = require("node-fetch");
 const yaml = require("js-yaml");
 const Boom = require("@hapi/boom");
 
-require("dotenv").config(); // sets all the BARHACK_XXX variables, see README
-const FILE_ROOT = process.env.BARHACK_FILE_ROOT;
+require("dotenv").config();
+const FILE_ROOT = `${process.cwd()}/files`;
+const PORT = process.env.PORT || 8080;
 
 const Ajv = require("ajv");
 const ajv = new Ajv({ allErrors: true });
 ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-06.json"));
 const validate = ajv.compile(require("./pipeline-schema/schema.json"));
 
-const PORT = process.env.PORT;
-if (!PORT) {
-  throw new Error("PORT not defined");
-}
-
 const server = Hapi.server({
   port: PORT,
-  host: "127.0.0.1"
+  host: "127.0.0.1",
 });
+const BASE_URL = process.env.BASE_URL || server.info.uri;
 
 /**
  * Intended to be a "fast lint" option that satisfies Buildkite's JSON schema.
@@ -46,56 +43,65 @@ server.route({
     }
 
     return response;
-  }
+  },
 });
 
 /**
  * Intended to be an extended check, that actually attempts to run the pipeline
  * by uploading it within a build.
+ *
+ * Will not be added if the required environment variables are not set.
  */
-server.route({
-  method: "POST",
-  path: "/lint-with-build",
-  handler: async (request, h) => {
-    // Save the given file, might conflict or not work concurrently but oh well
-    const id = uuidv4();
-    FileSystem.ensureFolder(`${FILE_ROOT}/${id}`);
-    FileSystem.writeFile(`${FILE_ROOT}/${id}/pipeline.yml`, request.payload);
-    FileSystem.changePosixModeBits(`${FILE_ROOT}/${id}/pipeline.yml`, "666");
-    FileSystem.writeFile(`${FILE_ROOT}/${id}/status.txt`, "PENDING");
-    FileSystem.changePosixModeBits(`${FILE_ROOT}/${id}/status.txt`, "666");
+const CAN_RUN_BUILDKITE_BUILDS =
+  process.env.BUILDKITE_TOKEN &&
+  process.env.BUILDKITE_ORG &&
+  process.env.BUILDKITE_PIPELINE;
+if (CAN_RUN_BUILDKITE_BUILDS) {
+  server.route({
+    method: "POST",
+    path: "/lint-with-build",
+    handler: async (request, h) => {
+      // Save the given file, might conflict or not work concurrently but oh well
+      const id = uuidv4();
+      FileSystem.ensureFolder(`${FILE_ROOT}/${id}`);
+      FileSystem.writeFile(`${FILE_ROOT}/${id}/pipeline.yml`, request.payload);
+      FileSystem.writeFile(`${FILE_ROOT}/${id}/status.txt`, "PENDING");
 
-    // Trigger a pipeline to lint it
-    const response = await fetch(
-      `https://api.buildkite.com/v2/organizations/${process.env.BARHACK_ORG}/pipelines/${process.env.BARHACK_PIPELINE}/builds`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.BARHACK_BUILDKITE_TOKEN}`
-        },
-        body: JSON.stringify({
-          commit: "HEAD",
-          branch: "lint",
-          env: {
-            BARHACK_LINT_ID: id
-          }
-        })
+      // Trigger a pipeline to lint it
+      const response = await fetch(
+        `https://api.buildkite.com/v2/organizations/${process.env.BUILDKITE_ORG}/pipelines/${process.env.BUILDKITE_PIPELINE}/builds`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.BUILDKITE_TOKEN}`,
+          },
+          body: JSON.stringify({
+            commit: "HEAD",
+            branch: "master",
+            env: {
+              BARHACK_LINT_ID: id,
+              BARHACK_FILE_ROOT: FILE_ROOT,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        FileSystem.deleteFile(`${FILE_ROOT}/${id}/status.txt`);
+        throw Boom.internal(`Received ${response.status} from Buildkite API`);
       }
-    );
 
-    if (!response.ok) {
-      FileSystem.deleteFile(`${FILE_ROOT}/${id}/status.txt`);
-      throw Boom.internal(`Received ${response.status} from Buildkite API`);
-    }
-
-    return h
-      .response({
-        id,
-        status_url: `${process.env.BASE_URL}/lint-with-build/${id}`
-      })
-      .code(201);
-  }
-});
+      return h
+        .response({
+          id,
+          status_url: `${BASE_URL}/lint-with-build/${id}`,
+        })
+        .code(201);
+    },
+  });
+} else {
+  console.warn("Skipping /lint-with-build, no Buildkite config provided");
+}
 
 server.route({
   method: "GET",
@@ -109,7 +115,29 @@ server.route({
       `${FILE_ROOT}/${request.params.id}/status.txt`
     );
     return { status };
-  }
+  },
+});
+
+server.route({
+  method: "GET",
+  path: "/robots.txt",
+  handler: (request, h) => {
+    return h
+      .response(
+        `
+User-agent: *
+Disallow: /`
+      )
+      .type("text/plain");
+  },
+});
+
+server.route({
+  method: "*",
+  path: "/{any*}",
+  handler: (request, h) => {
+    return h.redirect("https://github.com/nchlswhttkr/barhack/");
+  },
 });
 
 async function start() {
@@ -124,7 +152,7 @@ async function stop() {
 
 start();
 
-process.on("unhandledRejection", e => {
+process.on("unhandledRejection", (e) => {
   console.error(e);
   process.exit(1);
 });
