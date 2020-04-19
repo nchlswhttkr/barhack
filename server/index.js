@@ -77,7 +77,7 @@ if (CAN_RUN_BUILDKITE_BUILDS) {
           },
           body: JSON.stringify({
             commit: "HEAD",
-            branch: "refactor", // TODO change back to master
+            branch: "master",
             env: {
               BARHACK_LINT_ID: id,
               BARHACK_FILE_ROOT: FILE_ROOT,
@@ -142,7 +142,7 @@ server.route({
 
 async function start() {
   await server.start();
-  console.log(`Server running on ${BASE_URL}`);
+  console.log(`Server running on ${server.info.uri}`);
 }
 
 async function stop() {
