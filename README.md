@@ -19,13 +19,15 @@ steps:
 # {"status": "PASSED"}
 ```
 
-A more confident way to check is to have an agent attempt to upload the pipeline file while running a build. This requires authentication.
+Pipeline files can also be validated by uploading them during a running build. To see this in action, you can set up the server and Buildkite agent on your local machine.
+
+Here's how it looks using my server! Access is restricted to authenticated requests only.
 
 ```sh
 # Post the contents of your pipeline.yml file
-curl -H "Authorization: Basic <your-auth-details>" \
+curl "https://barhack.nchlswhttkr.com/lint-with-build" \
+    -H "Authorization: Basic <your-auth-details>" \
     -H "Content-Type: text/plain" \
-    -X POST "https://barhack.nchlswhttkr.com/lint-with-build" \
     -d '
 steps:
     - command: echo "Hello world!"
